@@ -1,6 +1,6 @@
 from advance_model import *
-from players.Azul_project_group_18.mcst import monte_carlo_tree_search
-from players.Azul_project_group_18.mctsnodes import mctsNode
+from players.mcst import monte_carlo_tree_search
+from players.mctsnodes import mctsNode
 
 
 class myPlayer(AdvancePlayer):
@@ -10,7 +10,7 @@ class myPlayer(AdvancePlayer):
     def SelectMove(self,moves,game_state):
         root = mctsNode(self.id, game_state, last_action=None, parent=None)
         mcts = monte_carlo_tree_search(root)
-        best_move = mcts.best_move(200)
+        best_move = mcts.best_move(250)
         return best_move
 
 
