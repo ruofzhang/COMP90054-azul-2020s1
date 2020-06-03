@@ -46,6 +46,8 @@ class mctsNode(object):
             next = 1 - next
 
         rollout_state.ExecuteEndOfRound()
+        this_plr.EndOfGameScore()
+        opponent_plr.EndOfGameScore()
         this_score = this_plr.score
         opponent_score = opponent_plr.score
         if this_score >= opponent_score:
