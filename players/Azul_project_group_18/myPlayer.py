@@ -1,6 +1,6 @@
 from advance_model import *
-from players.mcts import monte_carlo_tree_search
-from players.mctsnodes import mctsNode
+from players.Azul_project_group_18.mcts import monte_carlo_tree_search
+from players.Azul_project_group_18.mctsnodes import mctsNode
 
 
 class myPlayer(AdvancePlayer):

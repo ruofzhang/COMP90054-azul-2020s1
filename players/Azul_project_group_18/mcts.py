@@ -1,4 +1,4 @@
-from players.mctsnodes import mctsNode
+from players.Azul_project_group_18.mctsnodes import mctsNode
 
 
 class monte_carlo_tree_search:
