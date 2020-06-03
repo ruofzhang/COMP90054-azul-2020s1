@@ -35,31 +35,54 @@ class myPlayer(AdvancePlayer):
         curPlayerState = game_state.players[self.id]
         bestmove = None
         bestStateScore = -1
-        if (curPlayerState.grid_state == 0).all():
-            moveStatePairs = self.breadthFirstSearch(game_state)
-            for state in moveStatePairs:
-                if self.evaluateGameState(state) > bestStateScore:
-                    bestStateScore = self.evaluateGameState(state)
-                    bestmove = moveStatePairs[state]
-        else:
-            moveStatePairs = self.breadthFirstSearch(game_state)
-            for state, move in moveStatePairs.items():
-                if self.evaluateGameState(state) > bestStateScore:
-                    bestStateScore = self.evaluateGameState(state)
-                    bestmove = moveStatePairs[state]
+        moveStatePairs = self.BFS(game_state)
+        for state in moveStatePairs:
+            if self.evaluateGameState(state) > bestStateScore:
+                bestStateScore = self.evaluateGameState(state)
+                bestmove = moveStatePairs[state]
         if bestmove == None:
-            bestmove = random.choice(moves)
+            bestmove = self.SelectMove_naive(moves, game_state)
         return bestmove
 
+
+    def SelectMove_naive(self, moves, game_state):
+        # Select move that involves placing the most number of tiles
+        # in a pattern line. Tie break on number placed in floor line.
+        most_to_line = -1
+        corr_to_floor = 0
+
+        best_move = None
+
+        for mid,fid,tgrab in moves:
+            if most_to_line == -1:
+                best_move = (mid,fid,tgrab)
+                most_to_line = tgrab.num_to_pattern_line
+                corr_to_floor = tgrab.num_to_floor_line
+                continue
+
+            if tgrab.num_to_pattern_line > most_to_line:
+                best_move = (mid,fid,tgrab)
+                most_to_line = tgrab.num_to_pattern_line
+                corr_to_floor = tgrab.num_to_floor_line
+            elif tgrab.num_to_pattern_line == most_to_line and \
+                tgrab.num_to_pattern_line < corr_to_floor:
+                best_move = (mid,fid,tgrab)
+                most_to_line = tgrab.num_to_pattern_line
+                corr_to_floor = tgrab.num_to_floor_line
+
+        return best_move
+
     #check
-    def breadthFirstSearch(self, game_state):
+    def BFS(self, game_state):
         startTime = time.time()
+        moveStatePairs = {}
         gameStateQueue = Queue()
         gameStateQueue.push((None, game_state))
-        moveStatePairs = {}
-        i = 0
-        while(not gameStateQueue.isEmpty()):
-            if time.time() - startTime > 0.97:
+        justOneLayer = True
+        while not gameStateQueue.isEmpty():
+
+            #add the break time
+            if time.time() - startTime > 0.95:
                 break
             prevMove, curGameState = gameStateQueue.pop()
             possibleMoves = self.nextMoves(curGameState)
@@ -67,13 +90,13 @@ class myPlayer(AdvancePlayer):
                 return moveStatePairs
             for move in possibleMoves:
                 newGameState = self.stateAfterMove(move, curGameState)
-                if i < 1:
+                if justOneLayer == True:
                     gameStateQueue.push((move, newGameState))
                     moveStatePairs[newGameState] = move
                 else:
                     gameStateQueue.push((prevMove, newGameState))
                     moveStatePairs[newGameState] = prevMove
-            i += 1
+            justOneLayer = False
 
         return moveStatePairs
     """
@@ -153,30 +176,28 @@ class myPlayer(AdvancePlayer):
         return bestStateScore
     """
 
-    #check
+    # check
     def nextMoves(self, game_state):
-        moves = game_state.players[self.id].GetAvailableMoves(game_state)
-        possibleMoves = []
         lineIndexPairTileType = []
-        targetWallColumns = []
-        targetWallRows = []
         patternLineColor = game_state.players[self.id].lines_tile
-        playerWall = game_state.players[self.id].grid_state
-
-        for i in range(0,4):
+        for i in range(0, 4):
             if patternLineColor[i] != -1:
                 lineIndexPairTileType.append((i, patternLineColor[i]))
 
+        targetWallColumns = []
         for lineIndex, tile_type in lineIndexPairTileType:
             targetWallColumns.append((lineIndex + tile_type) % 5)
 
-        for row in range(0,4):
-            for col in range(0,4):
+        targetWallRows = []
+        playerWall = game_state.players[self.id].grid_state
+        for row in range(0, 4):
+            for col in range(0, 4):
                 if playerWall[row][col] == 1:
                     targetWallRows.append(row)
                     break
 
-        for moveType, factory, tileGrab in moves:
+        possibleMoves = []
+        for moveType, factory, tileGrab in game_state.players[self.id].GetAvailableMoves(game_state):
             if patternLineColor[tileGrab.pattern_line_dest] != -1:
                 possibleMoves.append((moveType, factory, tileGrab))
             else:
@@ -190,42 +211,37 @@ class myPlayer(AdvancePlayer):
     #check
     def stateAfterMove(self, move, curState):
         newState = copy.deepcopy(curState)
-
         if move[0] == Move.TAKE_FROM_CENTRE:
-            tg = move[2]
-
             if not newState.first_player_taken:
                 newState.players[self.id].GiveFirstPlayerToken()
                 newState.first_player_taken = True
                 newState.next_first_player = self.id
 
-            if tg.num_to_floor_line > 0:
+            if move[2].num_to_floor_line > 0:
                 ttf = []
-                for i in range(tg.num_to_floor_line):
-                    ttf.append(tg.tile_type)
+                for i in range(move[2].num_to_floor_line):
+                    ttf.append(move[2].tile_type)
                 newState.players[self.id].AddToFloor(ttf)
                 newState.bag_used.extend(ttf)
 
-            if tg.num_to_pattern_line > 0:
-                newState.players[self.id].AddToPatternLine(tg.pattern_line_dest, tg.num_to_pattern_line, tg.tile_type)
+            if move[2].num_to_pattern_line > 0:
+                newState.players[self.id].AddToPatternLine(move[2].pattern_line_dest, move[2].num_to_pattern_line, move[2].tile_type)
 
-            newState.centre_pool.RemoveTiles(tg.number, tg.tile_type)
+            newState.centre_pool.RemoveTiles(move[2].number, move[2].tile_type)
 
         elif move[0] == Move.TAKE_FROM_FACTORY:
-            tg = move[2]
-            if tg.num_to_floor_line > 0:
-                ttf = []
-                for i in range(tg.num_to_floor_line):
-                    ttf.append(tg.tile_type)
-                newState.players[self.id].AddToFloor(ttf)
-                newState.bag_used.extend(ttf)
+            if move[2].num_to_floor_line > 0:
+                temp = []
+                for i in range(move[2].num_to_floor_line):
+                    temp.append(move[2].tile_type)
+                newState.players[self.id].AddToFloor(temp)
+                newState.bag_used.extend(temp)
 
-            if tg.num_to_pattern_line > 0:
-                newState.players[self.id].AddToPatternLine(tg.pattern_line_dest, tg.num_to_pattern_line, tg.tile_type)
+            if move[2].num_to_pattern_line > 0:
+                newState.players[self.id].AddToPatternLine(move[2].pattern_line_dest, move[2].num_to_pattern_line, move[2].tile_type)
 
-            fid = move[1]
-            fac = newState.factories[fid]
-            fac.RemoveTiles(tg.number, tg.tile_type)
+            fac = newState.factories[move[1]]
+            fac.RemoveTiles(move[2].number, move[2].tile_type)
 
             for tile in Tile:
                 num_on_fd = fac.tiles[tile]
@@ -235,17 +251,17 @@ class myPlayer(AdvancePlayer):
         return newState
 
     def evaluateGameState(self, game_state):
-        floor = game_state.players[self.id].floor
-        floorScore = [-1, -1, -2, -2, -2, -3, -3]
         score = 0
-        for i,j in zip(floor, floorScore):
-            score += i*j
         patternLineNum = game_state.players[self.id].lines_number
         for i in range(0, 4):
-            if patternLineNum[i] == i+1:
+            if patternLineNum[i] == i + 1:
                 score += 1
+        floor = game_state.players[self.id].floor
+        floorScore = [-1, -1, -2, -2, -2, -3, -3]
+        for i,j in zip(floor, floorScore):
+            score += i*j
         return score
-
+"""
 # impelement the Priority Queue for A*
 # this class should have push, pop, and isEmpty
 class PriorityQueue:
@@ -267,22 +283,22 @@ class PriorityQueue:
     # return boolean whether the list is empty
     def isEmpty(self):
         return self.num == 0
+"""
 
-
-# impelement the Queue for BFS
-# this class should have push, pop, and isEmpty
+    # impelement the Queue for BFS
+    # this class should have push, pop, and isEmpty
 class Queue:
     def __init__(self):
         self.list = []
 
-    #push one item
+    # push one item
     def push(self, item):
         self.list.append(item)
 
-    #pop the last item from Queue
+    # pop the last item from Queue
     def pop(self):
         return self.list.pop()
 
-    #return boolean whether the list is empty
+    # return boolean whether the list is empty
     def isEmpty(self):
         return len(self.list) == 0
