@@ -15,11 +15,7 @@ class mctsNode(object):
         self.visits = 0
         self.wins = 0
 
-
-
     def expand(self):
-        # action = self.move_selection(self.untried_actions)
-        # self.untried_actions.remove(action)
         action = self.untried_actions[0]
         self.untried_actions.remove(action)
         copy_state = copy.deepcopy(self.state)
@@ -78,7 +74,7 @@ class mctsNode(object):
         best_child = self.children[np.argmax(choices_weights)]
         return best_child
 
-    def rollout_policy(self, possible_moves):
+    def default_rollout_policy(self, possible_moves):
         return random.choice(possible_moves)
 
     def sort_moves(self):
@@ -88,65 +84,6 @@ class mctsNode(object):
         sorted_moves = sorted_moves[0: math.ceil(num_moves / 10)]
         return sorted_moves
 
-    def shrink_untried_moves(self,size=1):
 
-        available_moves = self.state.players[self.next_to_move].GetAvailableMoves(self.state)
-        num_moves = len(available_moves)
-        new_num_moves = math.ceil(num_moves / size)
-        new_moves = random.sample(available_moves, new_num_moves)
 
-        return new_moves
 
-    def move_selection(self, moves):
-
-        selected_move = None
-        plr_lines_number = self.state.players[self.next_to_move].lines_number
-        num_to_floor = 7
-
-        for mid, fid, tgrab in moves:
-            if tgrab.num_to_pattern_line == 0:
-                continue
-            if (tgrab.num_to_pattern_line == 1 and tgrab.pattern_line_dest == 3 and tgrab.num_to_floor_line ==0)\
-                or (tgrab.num_to_pattern_line == 1  and tgrab.pattern_line_dest == 4 and tgrab.num_to_floor_line ==0):
-                continue
-            if tgrab.num_to_pattern_line == 5:
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_pattern_line == 4:
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_pattern_line == 3 and tgrab.num_to_floor_line == (0 or 1):
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_pattern_line == 2 and tgrab.num_to_floor_line == (0 or 1):
-                selected_move = (mid, fid, tgrab)
-                break
-            if (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 2 and  tgrab.pattern_line_dest == 1 and tgrab.num_to_floor_line == 0)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and  tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 3 and  tgrab.pattern_line_dest == 2 and tgrab.num_to_floor_line == 0)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and  tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 4 and  tgrab.pattern_line_dest == 3 and tgrab.num_to_floor_line == 0)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and  tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 5 and  tgrab.pattern_line_dest == 4 and tgrab.num_to_floor_line == 0):
-                selected_move = (mid, fid, tgrab)
-                break
-            if (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 2 and  tgrab.pattern_line_dest == 1 and tgrab.num_to_floor_line == 1)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 3 and  tgrab.pattern_line_dest == 2 and tgrab.num_to_floor_line == 1)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 4 and  tgrab.pattern_line_dest == 3 and tgrab.num_to_floor_line == 1)\
-                or (tgrab.num_to_pattern_line > 0 and plr_lines_number[tgrab.pattern_line_dest] > 0 and tgrab.num_to_pattern_line + plr_lines_number[tgrab.pattern_line_dest] == 5 and  tgrab.pattern_line_dest == 4 and tgrab.num_to_floor_line == 1):
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_pattern_line > 0 and tgrab.num_to_floor_line <= 2:
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_floor_line == 1:
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_floor_line == 2:
-                selected_move = (mid, fid, tgrab)
-                break
-            if tgrab.num_to_floor_line == 3:
-                selected_move = (mid, fid, tgrab)
-                break
-
-        if selected_move == None:
-            selected_move = random.choice(moves)
-
-        return selected_move
