@@ -14,10 +14,13 @@ Some information about the game:
 This repository contains a working agent in 1v1 Azul game under the dir ```players/myPlayer.py```. The agent implements ```Monte Carlo Tree Search Algorithm``` with improvements to derive the best move based on a given game state. The agent beats the baseline agents namely ```players/naive_player.py``` and ```players/random_player.py```. 
 
 **Challenges of MCTS agent designing and improvements**
-*Random roll-out:*
+
+*Random roll-out*
+
 Usually the roll-out policy in MCTS is randomly selecting a move. The downside is that it might derive an inaccurate result that leads to the wrong estimation of the value of a move. To improve this, in the roll-out stage, our algorithm sorts the available move list by the number to floor line ascending and number to pattern line descending of a move and then the next player to move chooses the first move in the sorted list, which has the highest number to pattern line while the lowest number to floor line.
 
 *Limited simulation times*
+
 Since the time limit of each move is 1 second, the simulation times cannot be set too high. The cost is that insufficient simulations cannot precisely reflect the value of a step. To address this, three improvements have been made. First, the number of nodes to be expanded is limited. In other words, the untried moves of a node are reduced. To achieve this, the untried moves list is sorted by number to floor line ascending and number to pattern line descending, which ensures that the front of the list is quality moves. And the size of the move list is reduced to 1/10 of the old one after experiments i.e. we only expand 1/10 of the available moves. Besides, the total moves of the roll-out stage are limited to 3 instead of moving until the end of the round. Since the simulation times are limited, to focus on exploitation, the weight of the exploration part of  UBC is set to 0. Initially, the maximum simulation times were around 200. After being improved, the algorithm can simulate 300 times.
 
 
